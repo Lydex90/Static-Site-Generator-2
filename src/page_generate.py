@@ -20,7 +20,7 @@ def extract_title(markdown):
         raise Exception("No header found")
     return h1.group(1)
 
-def generate_page(from_path, template_path, dest_path):
+def generate_page(from_path, template_path, dest_path, base_path):
     print(f"Generating page from {from_path} to {dest_path}, using {template_path}")
     with open(from_path, 'r') as f:
         from_content = f.read()
@@ -29,13 +29,13 @@ def generate_page(from_path, template_path, dest_path):
     from_converted = markdown_to_html_node(from_content)
     from_converted = from_converted.to_html()
     title = extract_title(from_content)
-    result = template_content.replace("{{ Title }}", title).replace("{{ Content }}", from_converted)
+    result = template_content.replace("{{ Title }}", title).replace("{{ Content }}", from_converted).replace('href="/', f'href="{base_path}').replace('src="/', f'src="{base_path}')
     
     os.makedirs(os.path.dirname(dest_path), exist_ok=True)
     with open(dest_path, 'w') as f:
         f.write(result)
 
-def generate_pages_recursive(dir_path_content, template_path, dest_dir_path):
+def generate_pages_recursive(dir_path_content, template_path, dest_dir_path, base_path):
     get_all_files = os.listdir(dir_path_content)
     print(f"generating page recursive on these files {get_all_files}")
     for file in get_all_files:
@@ -43,8 +43,8 @@ def generate_pages_recursive(dir_path_content, template_path, dest_dir_path):
         print(f"checking file {file}")
         if full_path.endswith('.md'):
             dest_path = os.path.join(dest_dir_path, file.replace(".md", ".html"))
-            generate_page(full_path,template_path,dest_path)
+            generate_page(full_path,template_path,dest_path, base_path)
         elif os.path.isdir(full_path):
             new_dest = os.path.join(dest_dir_path, file)
-            generate_pages_recursive(full_path, template_path, new_dest)
+            generate_pages_recursive(full_path, template_path, new_dest, base_path)
         
